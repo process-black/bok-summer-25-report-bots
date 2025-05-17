@@ -37,3 +37,8 @@ exports.parseAll = async ({ client, message, say, event }) => {
     }
 }
 
+// simple handler used for verifying that the bot is online
+exports.testing = async ({ say }) => {
+    await say("testing received");
+}
+
