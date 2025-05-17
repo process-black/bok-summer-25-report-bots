@@ -1,0 +1,24 @@
+{
+  "name": "bok-summer-25-report-bots",
+  "version": "1.0.0",
+  "description": "bots for reporting week",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "NODE_ENV=dev nodemon ./app.js"
+  },
+  "author": "mk",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/bolt": "^4.3.0",
+    "airtable": "^0.12.2",
+    "axios": "^1.9.0",
+    "chokidar": "^4.0.3",
+    "clear": "^0.1.0",
+    "dotenv": "^16.5.0",
+    "learninglab-log": "^1.0.2",
+    "node-cron": "^4.0.5",
+    "openai": "^4.100.0",
+    "yargs": "^17.7.2"
+  }
+}
