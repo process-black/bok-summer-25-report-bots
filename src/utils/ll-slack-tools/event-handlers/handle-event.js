@@ -19,7 +19,7 @@ exports.fileShared = async ({ event, client}) => {
         const fileInfo = await client.files.info({
           file: event.file_id,
         });
-        yellow(`handing ${event.file_id}, here's the fileInfo;`)
+        yellow(`handling ${event.file_id}, here's the fileInfo;`)
         magenta(fileInfo)
       } else {
         gray(`file shared in non-work channel, we'll leave it alone for now`)
