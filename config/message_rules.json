@@ -1,0 +1,17 @@
+[
+  {
+    "channel": "CHANNEL_TS280",
+    "trigger": "ts280",
+    "bot": "ts280"
+  },
+  {
+    "channel": "CHANNEL_RAINBOW",
+    "trigger": "rainbow",
+    "bot": "rainbow-tests"
+  },
+  {
+    "channel": "*",
+    "trigger": "*",
+    "bot": "bkc-bots"
+  }
+]

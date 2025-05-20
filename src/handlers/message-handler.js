@@ -1,7 +1,22 @@
 const llog = require('learninglab-log');
-const ts280 = require('../bots/ts280/index');
-const rainbowTests = require('../bots/rainbow-tests/index');
-const bkc = require('../bots/bkc-bots')
+const fs = require('fs');
+const path = require('path');
+const bkc = require('../bots/bkc-bots');
+
+// Load message rules from config/message_rules.json
+let messageRules = [];
+try {
+    const rulesPath = path.resolve(__dirname, '../../config/message_rules.json');
+    if (fs.existsSync(rulesPath)) {
+        const raw = fs.readFileSync(rulesPath, 'utf8');
+        messageRules = JSON.parse(raw);
+        llog.green('message rules loaded');
+    } else {
+        llog.yellow('no message_rules.json found');
+    }
+} catch (err) {
+    llog.red('error loading message rules', err);
+}
 
 const isBotMessage = (message) => {
     return message.subtype === "bot_message";
@@ -9,6 +24,37 @@ const isBotMessage = (message) => {
 
 const isInSubthread = (message) => {
     return message.thread_ts && message.thread_ts !== message.ts;
+};
+
+// Execute a bot module by name
+const runBot = async (botName, params) => {
+    try {
+        const bot = require(`../bots/${botName}`);
+        await bot(params);
+    } catch (err) {
+        llog.red(`failed to run bot ${botName}`, err);
+    }
+};
+
+// Apply rules from message_rules.json to dispatch bots
+const handleWithRules = async ({ client, message, say, event }) => {
+    if (!messageRules.length) {
+        // fall back to bkc if no rules loaded
+        await bkc({ client, message, say, event });
+        return;
+    }
+    for (const rule of messageRules) {
+        const channelMatch = rule.channel === '*' || rule.channel === message.channel;
+        const triggerMatch = rule.trigger === '*' ||
+            (message.text && message.text.toLowerCase().includes(rule.trigger.toLowerCase()));
+
+        if (channelMatch && triggerMatch) {
+            await runBot(rule.bot, { client, message, say, event });
+            return; // run first matching rule
+        }
+    }
+    // default fallback if no rule matched
+    await bkc({ client, message, say, event });
 };
 
 exports.parseAll = async ({ client, message, say, event }) => {
@@ -31,9 +77,9 @@ exports.parseAll = async ({ client, message, say, event }) => {
 
     llog.gray(message);
     if (message.text) {
-        const result = await bkc({ client, message, say, event })
+        await handleWithRules({ client, message, say, event });
     } else {
-        llog.blue("message has no text")
+        llog.blue("message has no text");
     }
 }
 
