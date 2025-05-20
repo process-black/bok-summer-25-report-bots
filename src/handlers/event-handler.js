@@ -15,7 +15,7 @@ const path = require("path");
 //     const fileInfo = await client.files.info({
 //       file: event.file_id,
 //     });
-//     yellow(`handing ${event.file_id}, here's the fileInfo;`)
+//     yellow(`handling ${event.file_id}, here's the fileInfo;`)
 //     yellow(fileInfo)
 //     if (event.channel_id == process.env.SLACK_EXTERNAL_LINKS_CHANNEL && handledImageFiles.includes(fileInfo.file.mimetype) ) {
 //       await handleImageFile(event, client, fileInfo)
