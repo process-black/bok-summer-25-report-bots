@@ -4,7 +4,7 @@
   "description": "bots for reporting week",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test test/*.test.js",
     "dev": "NODE_ENV=dev nodemon ./app.js",
     "prod": "NODE_ENV=prod node ./app.js"
   },
