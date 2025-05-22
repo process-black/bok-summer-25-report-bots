@@ -1,7 +1,6 @@
 const llog = require('learninglab-log');
 const fs = require('fs');
 const path = require('path');
-const bkc = require('../bots/bkc-bots');
 
 // Load message rules from config/message_rules.json
 let messageRules = [];
@@ -26,10 +25,14 @@ const isInSubthread = (message) => {
     return message.thread_ts && message.thread_ts !== message.ts;
 };
 
+const bots = require('../bots');
 // Execute a bot module by name
 const runBot = async (botName, params) => {
     try {
-        const bot = require(`../bots/${botName}`);
+        const bot = bots[botName];
+        if (!bot) {
+            throw new Error(`Bot '${botName}' not found in bots index.`);
+        }
         await bot(params);
     } catch (err) {
         llog.red(`failed to run bot ${botName}`, err);
@@ -39,22 +42,30 @@ const runBot = async (botName, params) => {
 // Apply rules from message_rules.json to dispatch bots
 const handleWithRules = async ({ client, message, say, event }) => {
     if (!messageRules.length) {
-        // fall back to bkc if no rules loaded
-        await bkc({ client, message, say, event });
+        llog.yellow('No message rules loaded; no bot will be run.');
         return;
     }
+    let matched = false;
+    const botPromises = [];
     for (const rule of messageRules) {
-        const channelMatch = rule.channel === '*' || rule.channel === message.channel;
+        const channels = rule.channels || [];
+        const channelMatch = channels.includes('*') || channels.includes(message.channel);
         const triggerMatch = rule.trigger === '*' ||
             (message.text && message.text.toLowerCase().includes(rule.trigger.toLowerCase()));
 
         if (channelMatch && triggerMatch) {
-            await runBot(rule.bot, { client, message, say, event });
-            return; // run first matching rule
+            botPromises.push(runBot(rule.bot, { client, message, say, event }));
+            matched = true;
         }
     }
-    // default fallback if no rule matched
-    await bkc({ client, message, say, event });
+    if (botPromises.length > 0) {
+        Promise.allSettled(botPromises).then(() => {
+            // Optionally log completion here
+        });
+    }
+    if (!matched) {
+        llog.blue('No matching rule found; no bot run.');
+    }
 };
 
 exports.parseAll = async ({ client, message, say, event }) => {
