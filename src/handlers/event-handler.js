@@ -110,14 +110,16 @@ exports.reactionAdded = async ({ event, client }) => {
   llog.cyan(event);
   if (event.reaction == "eyeglasses") {
     llog.blue("vision request");
-    let result = await handleVisionRequest({ event, client });
-    llog.magenta(result);
+    // let result = await handleVisionRequest({ event, client });
+    // llog.magenta(result);
   }
-  if (event.reaction == "waitwhat") {
+  if (event.reaction == "waitwhat" || event.reaction == "blob_waitwhat") {
     llog.blue("what, what? please explain request.");
-    let result = await explainRequest({ event, client });
-    llog.magenta(result);
+    // let result = await explainRequest({ event, client });
+    // llog.magenta(result);
   } else {
+    llog.yellow("unhandled reactionAdded");
+    llog.cyan(event);
   }
 };
 

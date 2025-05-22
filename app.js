@@ -3,6 +3,7 @@ var path = require("path");
 var fs = require("fs");
 const llog = require("learninglab-log");
 const handleMessages = require("./src/handlers/message-handler");
+const handleEvents = require("./src/handlers/event-handler");
 global.ROOT_DIR = path.resolve(__dirname);
 
 require("dotenv").config({
@@ -20,6 +21,11 @@ const app = new App({
 
 app.message("testing testing", handleMessages.testing);
 app.message(/.*/, handleMessages.parseAll);
+
+app.event("reaction_added", handleEvents.reactionAdded);
+app.event("reaction_removed", handleEvents.reactionRemoved);
+// app.event("app_home_opened", handleEvents.appHomeOpened);
+// app.event("file_shared", handleEvents.fileShared);
 
 (async () => {
 

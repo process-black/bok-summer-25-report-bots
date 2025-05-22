@@ -10,13 +10,8 @@
     "bot": "rainbow"
   },
   {
-    "channels": ["*"],
-    "trigger": "*",
-    "bot": "bkc"
-  },
-  {
-    "channels": ["*"],
+    "channel": "*",
     "trigger": "testing testing",
-    "bot": "testing_testing"
+    "bot": "testing"
   }
 ]

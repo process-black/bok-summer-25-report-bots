@@ -1,15 +1,18 @@
 const llog = require('learninglab-log');
 const fs = require('fs');
 const path = require('path');
+// const bkc = require('../bots/bkc-bots');
 
 // Load message rules from config/message_rules.json
 let messageRules = [];
+
 try {
     const rulesPath = path.resolve(__dirname, '../../config/message_rules.json');
     if (fs.existsSync(rulesPath)) {
         const raw = fs.readFileSync(rulesPath, 'utf8');
         messageRules = JSON.parse(raw);
         llog.green('message rules loaded');
+        llog.green(messageRules)
     } else {
         llog.yellow('no message_rules.json found');
     }
@@ -42,7 +45,8 @@ const runBot = async (botName, params) => {
 // Apply rules from message_rules.json to dispatch bots
 const handleWithRules = async ({ client, message, say, event }) => {
     if (!messageRules.length) {
-        llog.yellow('No message rules loaded; no bot will be run.');
+        // fall back to bkc if no rules loaded
+        // await bkc({ client, message, say, event });
         return;
     }
     let matched = false;
@@ -58,14 +62,8 @@ const handleWithRules = async ({ client, message, say, event }) => {
             matched = true;
         }
     }
-    if (botPromises.length > 0) {
-        Promise.allSettled(botPromises).then(() => {
-            // Optionally log completion here
-        });
-    }
-    if (!matched) {
-        llog.blue('No matching rule found; no bot run.');
-    }
+    // default fallback if no rule matched
+    // await bkc({ client, message, say, event });
 };
 
 exports.parseAll = async ({ client, message, say, event }) => {
