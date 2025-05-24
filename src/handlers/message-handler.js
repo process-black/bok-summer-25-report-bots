@@ -1,24 +1,28 @@
 const llog = require('learninglab-log');
-const fs = require('fs');
-const path = require('path');
-// const bkc = require('../bots/bkc-bots');
 
-// Load message rules from config/message_rules.json
-let messageRules = [];
+// Import bot functions directly
+const { testing, ts280, rainbowTests } = require('../bots');
 
-try {
-    const rulesPath = path.resolve(__dirname, '../../config/message_rules.json');
-    if (fs.existsSync(rulesPath)) {
-        const raw = fs.readFileSync(rulesPath, 'utf8');
-        messageRules = JSON.parse(raw);
-        llog.green('message rules loaded');
-        llog.green(messageRules)
-    } else {
-        llog.yellow('no message_rules.json found');
-    }
-} catch (err) {
-    llog.red('error loading message rules', err);
-}
+// Message rules configuration
+const messageHandlers = [
+//   {
+//     channels: ["CHANNEL_TS280"],
+//     trigger: "ts280",
+//     handler: ts280
+//   },
+//   {
+//     channels: ["CHANNEL_RAINBOW"],
+//     trigger: "rainbow",
+//     handler: rainbowTests
+//   },
+  {
+    channels: ["*"],
+    trigger: "testing testing",
+    handler: testing
+  }
+];
+
+llog.green('Message handlers loaded');
 
 const isBotMessage = (message) => {
     return message.subtype === "bot_message";
@@ -28,42 +32,26 @@ const isInSubthread = (message) => {
     return message.thread_ts && message.thread_ts !== message.ts;
 };
 
-const bots = require('../bots');
-// Execute a bot module by name
-const runBot = async (botName, params) => {
-    try {
-        const bot = bots[botName];
-        if (!bot) {
-            throw new Error(`Bot '${botName}' not found in bots index.`);
-        }
-        await bot(params);
-    } catch (err) {
-        llog.red(`failed to run bot ${botName}`, err);
-    }
-};
-
-// Apply rules from message_rules.json to dispatch bots
+// Handle messages using the configured handlers
 const handleWithRules = async ({ client, message, say, event }) => {
-    if (!messageRules.length) {
-        // fall back to bkc if no rules loaded
-        // await bkc({ client, message, say, event });
-        return;
-    }
-    let matched = false;
-    const botPromises = [];
-    for (const rule of messageRules) {
-        const channels = rule.channels || [];
-        const channelMatch = channels.includes('*') || channels.includes(message.channel);
-        const triggerMatch = rule.trigger === '*' ||
-            (message.text && message.text.toLowerCase().includes(rule.trigger.toLowerCase()));
-
+    if (!message.text) return;
+    
+    const text = message.text.toLowerCase();
+    
+    for (const handler of messageHandlers) {
+        const channelMatch = handler.channels.includes('*') || 
+                           handler.channels.includes(message.channel);
+        const triggerMatch = text.includes(handler.trigger.toLowerCase());
+        
         if (channelMatch && triggerMatch) {
-            botPromises.push(runBot(rule.bot, { client, message, say, event }));
-            matched = true;
+            try {
+                await handler.handler({ client, message, say, event });
+                break; // Stop after first matching handler
+            } catch (error) {
+                llog.red(`Error in message handler for trigger '${handler.trigger}':`, error);
+            }
         }
     }
-    // default fallback if no rule matched
-    // await bkc({ client, message, say, event });
 };
 
 exports.parseAll = async ({ client, message, say, event }) => {
