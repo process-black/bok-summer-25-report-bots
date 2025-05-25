@@ -6,3 +6,4 @@ module.exports.rainbowTests = require("./rainbow-tests/index.js")
 module.exports.bkcBots = require("./bkc-bots/index.js")
 module.exports.emoji2ExplanationBot = require("./emoji-2-explanation-bot/index.js")
 module.exports.emoji2TimelineEventBot = require("./emoji-2-timeline-event/index.js");
+module.exports.imageHandlerBot = require("./image-handler-bot/index.js");

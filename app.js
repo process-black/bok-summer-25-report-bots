@@ -25,7 +25,7 @@ app.message(/.*/, handleMessages.parseAll);
 app.event("reaction_added", handleEvents.reactionAdded);
 app.event("reaction_removed", handleEvents.reactionRemoved);
 // app.event("app_home_opened", handleEvents.appHomeOpened);
-// app.event("file_shared", handleEvents.fileShared);
+app.event("file_shared", handleEvents.fileShared);
 
 (async () => {
 
