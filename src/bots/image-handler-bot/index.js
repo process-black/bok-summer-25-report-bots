@@ -15,6 +15,11 @@ const makeFilePublic = async (client, fileId) => {
     });
     return result;
   } catch (error) {
+    // If file is already public, that's fine - just continue
+    if (error.data && error.data.error === 'already_public') {
+      llog.yellow('File is already public, continuing...');
+      return { ok: true };
+    }
     llog.red('Error making file public:', error);
     throw error;
   }
@@ -85,10 +90,23 @@ const generateImageDescription = async (imageUrl, contextMessages) => {
       temperature: 0.7,
     });
 
+    const content = response.choices[0].message.content;
     try {
-      return JSON.parse(response.choices[0].message.content);
+      // Try to parse as JSON first
+      const parsed = JSON.parse(content);
+      return parsed;
     } catch (parseError) {
-      const content = response.choices[0].message.content;
+      // If JSON parsing fails, try to extract JSON from markdown code blocks
+      const jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch) {
+        try {
+          return JSON.parse(jsonMatch[1]);
+        } catch (innerParseError) {
+          // Fall back to treating as plain text
+        }
+      }
+      
+      // Final fallback - treat as plain text
       return {
         description: content,
         alt_text: content.split('.')[0] || 'Image'
@@ -204,11 +222,12 @@ const processImage = async ({ client, file, event }) => {
     // Save to Airtable
     await saveToAirtable(imageData);
 
-    // Post response to Slack
+    // Post response to Slack - use the original message timestamp as thread_ts
+    const threadTs = event.thread_ts || event.message_ts || event.event_ts;
     await postSlackResponse(
       client, 
       event.channel_id, 
-      event.thread_ts || event.event_ts, 
+      threadTs, 
       imageData
     );
 
@@ -228,7 +247,31 @@ const handleImageUpload = async ({ event, client }) => {
       file: event.file_id,
     });
 
-    await processImage({ client, file: fileInfo.file, event });
+    // For file_shared events, we need to find the message that contains this file
+    // to reply in the correct thread
+    let messageTs = event.event_ts;
+    try {
+      const channelHistory = await client.conversations.history({
+        channel: event.channel_id,
+        limit: 10,
+      });
+      
+      // Find the message that contains this file
+      const fileMessage = channelHistory.messages.find(msg => 
+        msg.files && msg.files.some(f => f.id === event.file_id)
+      );
+      
+      if (fileMessage) {
+        messageTs = fileMessage.ts;
+        llog.green(`Found file message timestamp: ${messageTs}`);
+      }
+    } catch (historyError) {
+      llog.yellow('Could not find original message, using event timestamp');
+    }
+
+    // Pass the correct message timestamp for threading
+    const eventWithMessageTs = { ...event, message_ts: messageTs };
+    await processImage({ client, file: fileInfo.file, event: eventWithMessageTs });
 
   } catch (error) {
     llog.red('Error in image handler bot:', error);
