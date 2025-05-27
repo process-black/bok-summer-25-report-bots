@@ -2,7 +2,7 @@ const llog = require("learninglab-log");
 const bots = require('../bots');
 
 
-const emojiBotMap = {
+const reactionBotMap = {
   "eyeglasses": bots.emoji2VisionBot,
   "waitwhat": bots.emoji2ExplanationBot,
   "blob_waitwhat": bots.emoji2ExplanationBot,
